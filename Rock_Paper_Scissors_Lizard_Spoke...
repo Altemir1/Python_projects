@@ -1,0 +1,129 @@
+import random
+
+list_of_options = {"1": "scissors", "2": "rock", "3": "paper"}
+
+winning_list = {"rock": "scissors", "paper": "rock", "scissors": "paper"}
+
+loosing_list = {"rock": "paper", "paper": "scissors", "scissors": "rock"}
+
+sequence_options = "123"
+
+option = ""
+
+score = 0
+
+rating ={}
+#----------------------------
+def check_game(option, computers_option):
+    global score 
+    
+    if winning_list[option] == list_of_options[computers_option]:
+        print("Well done. The computer chose {} and failed".format(list_of_options[computers_option]))
+        score += 100
+    elif option == list_of_options[computers_option]:
+        print("There is a draw ({})".format(option))
+        score += 50
+    else:
+        print("Sorry, but the computer chose {}".format(loosing_list[option]))
+        
+#----------------------------
+def read_file():
+    global rating
+
+    rating_open = open("rating.txt", 'r')
+
+    for line in rating_open:
+        key, value = line.split(" ")
+        rating[key] = int(value.replace('\n', ""))
+
+    return rating
+    
+#----------------------------
+def classical_game():
+    global score
+    global sequence_options
+    global option
+    
+    while option != "!exit":
+    
+        option = input()
+        computers_option = random.choice(sequence_options)
+        
+        if option in winning_list:
+            check_game(option, computers_option)
+        elif option == "!rating":
+            print("You rating: {}".format(score))
+        else:
+            print("Invalid input!")
+        
+print("Bye")
+
+#----------------------------
+def custom_game(game_options):
+    global option
+    
+    list_options_reversed = game_options.split(",")
+    
+    list_options = list_options_reversed[::-1]
+
+    
+    while option != "!exit":
+        global score
+        option = input()
+        
+        if option in list_options:
+            option_index = list_options.index(option)
+        
+            computer_option_str = random.choice(list_options)
+            computer_option_index = list_options.index(computer_option_str)
+            
+            winning_indexes = define_winning_index(list_options, option_index)
+            if computer_option_index in winning_indexes:
+                print("Well done. The computer chose {} and failed".format(computer_option_str))
+                score += 100
+            elif option == computer_option_str:
+                print("There is a draw ({})".format(option))
+                score += 50
+            else:
+                print("Sorry, but the computer chose {}".format(computer_option_str))
+        elif option == "!rating":
+             print("You rating: {}".format(score))
+        else:
+            print("Invalid input")
+
+#----------------------------
+def define_winning_index(list,option_index):
+    winning_range = 0
+    winning_indexes = []
+
+    if len(list) % 2 ==0:
+        winning_range = len(list) // 2
+    else:
+        winning_range = (len(list) - 1) // 2
+        
+    count = 0
+    for i in range(1, winning_range + 1):
+        if i + option_index >= len(list):
+            winning_indexes.append(count)
+            count += 1
+        else:
+            winning_indexes.append(i + option_index)
+
+    return winning_indexes
+#----------------------------
+rating = read_file()
+
+name = input("Enter your name: ")
+
+print("Hello, {}".format(name))
+
+if name in rating:
+    score = rating[name]
+#---------------------------- 
+game_options = input()
+print("Okay, let's start")
+if game_options == "":
+    classical_game()
+else:
+    custom_game(game_options)
+#----------------------------
