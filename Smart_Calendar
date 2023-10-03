@@ -1,0 +1,165 @@
+import datetime
+import os
+import json
+import re
+
+# Define the file names
+NOTES_FILE = "notes.txt"
+BIRTHDAY_FILE = "birthday.txt"
+
+
+# Function to read data from a file
+def read_data(file_name):
+    data = {}
+    if os.path.exists(file_name):
+        with open(file_name, 'r') as file:
+            content = file.readlines()
+            for line in content:
+                entry = json.loads(line.strip())
+                data.update(entry)
+    return data
+
+
+# Function to write data to a file
+def write_data(file_name, data):
+    with open(file_name, 'w') as file:
+        for key, value in data.items():
+            entry = {key: value}
+            file.write(json.dumps(entry) + "\n")
+
+
+# Function to calculate time until remind
+def time_until_remind(dt, variable):
+    dt1 = datetime.datetime.strptime(dt, "%Y-%m-%d" if variable == "birthday" else "%Y-%m-%d %H:%M")
+    today = datetime.datetime.now()  # Changed to datetime.datetime.now()
+
+    if variable == "birthday":
+        next_birthday = dt1.replace(year=today.year)
+        if today > next_birthday:
+            next_birthday = dt1.replace(year=today.year + 1)
+    else:
+        next_birthday = dt1
+
+    delta = next_birthday - today
+
+    if variable == "birthday":
+        return delta.days, today.year - dt1.year
+    else:
+        delta_hours, remainder = divmod(delta.seconds, 3600)
+        delta_minutes, _ = divmod(remainder, 60)
+        """if delta_hours == 23 and delta_minutes == 59:
+            return delta.days + 1 , 0, 0
+        else:"""
+        return delta.days, delta_hours, delta_minutes
+
+
+
+# Function to add or delete entries
+def add_or_delete_entries(variable):
+    element = ""
+
+    if variable == "notes":
+        element = "note"
+    else:
+        element = "birthday"
+
+    data = read_data(NOTES_FILE if variable == "notes" else BIRTHDAY_FILE)
+    if element == "note":
+        print("Let's change several notes in the calendar")
+        num_entries = int(input(
+            f"How many {variable} do you want to add or delete? (enter a positive number to add or a negative to remove)"))
+    else:
+        print("Let's change several dates of birth in the calendar.")
+        num_entries = int(input(f"How many dates of birth do you want to add or delete? (enter a positive number to add or a negative to remove)"))
+
+    if num_entries > 0:
+        for i in range(num_entries):
+            if element == "note":
+                date_input = input(
+                    f"Enter date and time of {element} #{i + 1} (in format «YYYY-MM-DD HH:MM»): ")
+                text = input(f"Enter text of {element} #{i + 1}: ")
+            else:
+                text = input(f"Enter the name of #{i + 1}: ")
+                date_input = input(
+                    f"Enter the date of birth of #{i + 1} (in format «YYYY-MM-DD»): ")
+
+
+            if not re.match(r'\d{4}-\d{2}-\d{2}( \d{2}:\d{2})?$', date_input):
+                print("Incorrect date/time format. Please use 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM'.")
+                continue
+            hours = 0
+
+            if variable == "birthday":
+                days, year = time_until_remind(date_input, variable)
+            else:
+                days, hours, minutes = time_until_remind(date_input, variable)
+
+            if days < 0:
+                print(f"The {variable} date is in the past.")
+                continue
+
+
+
+            entry = {text: date_input}
+            data.update(entry)
+
+        if variable == "notes":
+            print(f"{variable.capitalize()} added:")
+        else:
+            print("Birthdates added:")
+
+    elif num_entries < 0:
+        num_entries = abs(num_entries)
+
+        if not data:
+            print(f"No {variable} to delete.")
+            return
+
+        print(f"List of {variable}:")
+        for i, key in enumerate(data.keys(), start=1):
+            print(f"{i}. {key}")
+
+        for i in range(num_entries):
+            entry_to_delete = input(f"Enter the {variable} you want to delete: ")
+            if entry_to_delete in data:
+                del data[entry_to_delete]
+                print(f"{variable.capitalize()} '{entry_to_delete}' deleted.")
+            else:
+                print(f"No {variable} found with the given {variable}. Try again.")
+
+    write_data(NOTES_FILE if variable == "notes" else BIRTHDAY_FILE, data)
+
+
+# Function to print all entries
+def print_all_entries():
+    notes_data = read_data(NOTES_FILE)
+    birthdays_data = read_data(BIRTHDAY_FILE)
+
+
+    for key, value in notes_data.items():
+        days, hours, minutes = time_until_remind(value, "notes")
+
+        print(f"Before the event note \"{key}\" remains: {days} days, {hours} hours and {minutes} minutes.")
+
+
+    for key, value in birthdays_data.items():
+        days, age = time_until_remind(value, "birthday")
+        print(
+            f"{key}'s birthday is today. He (she) turns {age} years old." if days == 0 else f"{key}'s birthday is in {days} days. He (she) turns {age} years old.")
+
+
+# Main program
+def main():
+    current_date = datetime.datetime.now()
+    print(f"Current date and time:\n{current_date.strftime('%Y-%m-%d %H:%M')}")
+
+    print_all_entries()
+
+    add_or_delete_entries("notes")
+    add_or_delete_entries("birthday")
+
+    print_all_entries()
+
+
+if __name__ == "__main__":
+    main()
