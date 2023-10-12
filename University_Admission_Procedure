@@ -1,0 +1,142 @@
+import os
+
+
+def read_applicants_list():
+    applicants_list = []
+
+    file = open("applicant_list_7.txt", 'r')
+    file_content = file.readlines()
+    file.close()
+
+    for line in file_content:
+        applicants_list.append(line.replace("\n", "").split(" "))
+
+    return applicants_list
+
+
+def sorting_applicants_exam(applicants_list):
+    sorted_applicants_exam = []
+
+    for applicant in applicants_list:
+
+        exam_positions = []
+
+        for i in range(7, 10):
+            # Setting index of exam
+
+            if applicant[i] == "Physics":
+
+                mean = (int(applicant[2]) + int(applicant[4])) / 2
+
+                exam_positions.append(max(mean, int(applicant[6])))
+
+            elif applicant[i] == "Mathematics":
+
+                mean = int(applicant[4])
+
+                exam_positions.append(max(mean, int(applicant[6])))
+
+            elif applicant[i] == "Chemistry":
+
+                mean = int(applicant[3])
+
+                exam_positions.append(max(mean, int(applicant[6])))
+
+            elif applicant[i] == "Engineering":
+
+                mean = (int(applicant[4]) + int(applicant[5])) / 2
+
+                exam_positions.append(max(mean, int(applicant[6])))
+
+            elif applicant[i] == "Biotech":
+
+                mean = (int(applicant[2]) + int(applicant[3])) / 2
+
+                exam_positions.append(max(mean, int(applicant[6])))
+
+        sorted_applicants_exam.append(
+            [applicant[0], applicant[1], exam_positions[0], exam_positions[1], exam_positions[2], applicant[7],
+             applicant[8], applicant[9]])
+
+    return sorted_applicants_exam
+
+
+def priority_department(priority, department, count, i):
+    global successful_applicants, max_applicant, sorted_applicants_exam
+
+    count_temp = 0
+
+    count_temp += count
+
+    applicants_to_remove = []
+
+    sorted_applicants = sorted(sorted_applicants_exam, key=lambda x: (-float(x[i]), x[0]))
+
+    for applicant in sorted_applicants:
+
+        if department == applicant[priority]:
+
+            if count_temp == max_applicant:
+                break
+
+            successful_applicants.append([applicant[0], applicant[1], applicant[i], applicant[priority]])
+
+            applicants_to_remove.append(applicant)
+
+            count_temp += 1
+
+    for applicant in applicants_to_remove:
+        sorted_applicants_exam.remove(applicant)
+
+    return count_temp - count
+
+
+def applicants_list_department(max_applicant):
+    global department_list
+
+    count = [0, 0, 0, 0, 0]
+
+    # Checking by priority
+    for p in range(5, 8):
+
+        for i in range(len(department_list)):
+
+            if count[i] != max_applicant:
+                count[i] += priority_department(p, department_list[i], count[i], p - 3)
+
+
+def print_applicants_sorted_by_exam_then_name(applicants, department):
+    sorted_applicants = sorted(applicants, key=lambda x: (-float(x[2]), x[0]))
+
+    if os.path.exists(f"{department}.txt"):
+
+        file = open(f"{department}.txt", "w")
+
+    else:
+        file = open(f"{department}.txt", "a")
+
+    for applicant in sorted_applicants:
+        file.write(f"{applicant[0]} {applicant[1]} {applicant[2]}\n")
+
+    file.close()
+
+
+successful_applicants = []
+
+department_list = ["Biotech", "Chemistry", "Engineering", "Mathematics", "Physics"]
+
+max_applicant = int(input())
+
+sorted_applicants_exam = sorting_applicants_exam(read_applicants_list())
+
+applicants_list_department(max_applicant)
+
+for department in department_list:
+    lower_department = department.lower()
+
+    department_applicants = [applicant for applicant in successful_applicants if department in applicant]
+
+    print_applicants_sorted_by_exam_then_name(department_applicants, lower_department)
+
+
+
