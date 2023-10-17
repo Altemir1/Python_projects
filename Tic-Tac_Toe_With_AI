@@ -1,0 +1,554 @@
+# write your code here
+import copy
+import random
+
+
+def initial_state():
+
+    result = []
+
+    initial_input = input("Enter the cells: ")
+
+    field = [char for char in initial_input]
+
+
+    for i in range(0, 9, 3):
+
+        result.append([field[0 + i], field[1 + i], field[2 + i]])
+
+    return result
+
+
+
+def print_field(field):
+
+    print("---------")
+
+    for element in field:
+
+        print(f"| {element[0]} {element[1]} {element[2]} |")
+
+    print("---------")
+
+
+
+def check_coordinates(field, coordinates):
+
+
+    list_coordinates = coordinates.split(" ")
+
+    boolean_list_coordinates = [element.isdigit() for element in list_coordinates]
+
+
+
+    if len(list_coordinates) < 2:
+
+        if all(boolean_list_coordinates):
+
+            print("Write row coordinates!")
+
+        else:
+
+            print("You should enter numbers!")
+
+    else:
+
+        if all(boolean_list_coordinates):
+
+            int_coordinates = [int(element) - 1 for element in list_coordinates]
+
+            boolean_int_coordinates = [element <= 2 and element >= 0 for element in int_coordinates]
+
+
+            if not all(boolean_int_coordinates):
+
+                print("Coordinates should be from 1 to 3!")
+
+            elif field[int_coordinates[0]][int_coordinates[1]] == "_":
+
+                return int_coordinates
+
+            else:
+
+                print("This cell is occupied! Choose another one!")
+
+        else:
+
+            print("You should enter numbers!")
+
+
+def check_win(field, sign):
+
+    boolean_field = []
+
+    for element in field:
+
+        boolean_field.append([cell == sign for cell in element])
+
+    # Horizontal win
+
+    for element in boolean_field:
+
+        if all(element):
+
+            return True
+
+    # Vertical win
+
+    for i in range(0, 3):
+
+        column = [boolean_field[0][i], boolean_field[1][i], boolean_field[2][i]]
+
+        if all(column):
+
+            return True
+
+    # Diagonal win
+
+    left = [boolean_field[0][0], boolean_field[1][1], boolean_field[2][2]]
+
+    right = [boolean_field[0][2], boolean_field[1][1], boolean_field[2][0]]
+
+    if all(right) or all(left):
+
+        return True
+
+
+    return False
+
+
+def check_occupancy(field):
+
+    boolean_field = []
+
+    for element in field:
+
+        boolean_field.append([cell != "_" for cell in element])
+
+    check_row = []
+
+    for row in boolean_field:
+
+        if all(row):
+            check_row.append(True)
+        else:
+            check_row.append(False)
+
+
+    if all(check_row):
+
+        print("Draw")
+
+        return False
+
+    else:
+
+        return True
+def check_game(field):
+
+    # X for win
+
+    if check_win(field, "X"):
+
+        print("X wins")
+
+        return False
+
+    elif check_win(field, "O"):
+
+        print("O wins")
+
+        return False
+
+    else:
+
+        return check_occupancy(field)
+
+def level_easy(field):
+
+    flag = True
+
+
+    while flag:
+
+        x = random.randint(0, 2)
+
+        y = random.randint(0, 2)
+
+        if field[x][y] == "_":
+
+            flag = False
+
+    return x, y
+
+
+
+def user(field):
+
+    coordinates_list = []
+
+    coordinates = input("Enter the coordinates: ")
+
+    while not coordinates_list:
+
+        coordinates_list = check_coordinates(field, coordinates)
+
+    return coordinates_list
+
+# <----------HARD------------>
+
+
+# Define the game board and players
+
+# Function to check if a player has won the game
+def check_win_hard(board, player):
+    # Check rows, columns, and diagonals for a win
+    for i in range(0, 9, 3):
+        if board[i] == board[i + 1] == board[i + 2] == player:
+            return True
+    for i in range(3):
+        if board[i] == board[i + 3] == board[i + 6] == player:
+            return True
+    if board[0] == board[4] == board[8] == player:
+        return True
+    if board[2] == board[4] == board[6] == player:
+        return True
+    return False
+
+# Function to check if the game is over
+def game_over(board):
+    return " " not in board or check_win_hard(board, player) or check_win_hard(board, opponent)
+
+# Minimax algorithm
+def minimax(board, depth, is_maximizing):
+    if check_win_hard(board, opponent):
+        return -1
+    if check_win_hard(board, player):
+        return 1
+    if " " not in board:
+        return 0
+
+    if is_maximizing:
+        best_score = -float("inf")
+        for i in range(9):
+            if board[i] == " ":
+                board[i] = player
+                score = minimax(board, depth + 1, False)
+                board[i] = " "
+                best_score = max(score, best_score)
+        return best_score
+    else:
+        best_score = float("inf")
+        for i in range(9):
+            if board[i] == " ":
+                board[i] = opponent
+                score = minimax(board, depth + 1, True)
+                board[i] = " "
+                best_score = min(score, best_score)
+        return best_score
+
+# Find the best move using the minimax algorithm
+def find_best_move(board):
+    best_score = -float("inf")
+    best_move = -1
+
+    for i in range(9):
+        if board[i] == " ":
+            board[i] = player
+            score = minimax(board, 0, False)
+            board[i] = " "
+            if score > best_score:
+                best_score = score
+                best_move = i
+
+    return best_move
+
+def hard_level(field):
+# Example usage
+
+    board = []
+
+    for i in range(0, 3):
+        for j in range(0,3):
+            if field[i][j] == "_":
+                board.append(" ")
+            else:
+                board.append(field[i][j])
+
+
+    best_move = find_best_move(board)
+
+    x = best_move // 3
+    y = best_move % 3
+
+    return x, y
+
+# <-------HARD-------->
+def medium_level(field, sign):
+
+    checked = False
+
+    x = 0
+    y = 0
+
+    boolean_field = []
+
+    for element in field:
+
+        boolean_field.append([cell == sign for cell in element])
+
+    # Horizontal check
+
+
+    for i in range(0, 3):
+        count = boolean_field[i].count(True)
+        for j in range(0, 3):
+            if field[i][j] == "_" and count == 2:
+                checked = True
+                x = i
+                y = j
+
+    # Vertical
+    for i in range(0,3):
+
+        count_list = [boolean_field[0][i], boolean_field[1][i], boolean_field[2][i]]
+
+        count = count_list.count(True)
+        for j in range(0, 3):
+
+            if count == 2 and field[j][i] == "_":
+                checked = True
+                x = j
+                y = i
+
+
+    # Diagonal check
+    count_list = [boolean_field[0][0], boolean_field[1][1], boolean_field[2][2]]
+
+    count = count_list.count(True)
+
+
+    for i in range(0, 3):
+
+        if count == 2 and field[i][i] == "_":
+
+            checked = True
+            x = i
+            y = i
+
+    if boolean_field[0][2] == True and boolean_field[1][1] == True and field[2][0] == "_":
+        checked = True
+        x = 2
+        y = 0
+
+    elif  boolean_field[2][0] == True and boolean_field[1][1] == True and field[0][2] == "_":
+        checked = True
+        x = 0
+        y = 2
+
+    elif boolean_field[2][0] == True and boolean_field[0][2] == True and field[1][1] == "_":
+        checked = True
+        x = 1
+        y = 1
+
+    # Random value
+
+
+    if not checked:
+
+        x, y = level_easy(field)
+
+
+
+    return x, y
+
+
+flag = True
+
+field = [["_", "_", "_"], ["_", "_", "_"], ["_", "_", "_"]]
+
+user_input = ['']
+
+player = "X"
+
+opponent = "O"
+
+while user_input[0] != "exit":
+
+    flag = True
+
+    check = True
+
+    while check:
+
+        user_input = input("Input command: ").split(" ")
+
+
+        if user_input[0] == "exit":
+            flag = False
+            break
+
+        elif len(user_input) != 3:
+
+            print("Bad parameters!")
+
+        else:
+            check = False
+
+    print_field(field)
+
+    while flag:
+        x = 0
+        y = 0
+
+        if user_input[1] == "user" and user_input[2] != "user":
+
+
+
+            coordinates_list = user(field)
+
+            field[coordinates_list[0]][coordinates_list[1]] = "X"
+
+            print_field(field)
+
+            flag = check_game(field)
+
+            if flag == False:
+                break
+
+            print(f"Making move level \"{user_input[2]}\"")
+
+            if user_input[2] == "hard":
+                player = "O"
+                opponent = "X"
+                x, y = hard_level(field)
+
+            elif user_input[2] == "medium":
+
+                x, y = medium_level(field, "X")
+
+            else:
+
+                x, y = level_easy(field)
+
+            field[x][y] = "O"
+
+
+            print_field(field)
+
+
+        elif user_input[1] == "user" and user_input[2] == "user":
+
+            coordinates_list = user(field)
+
+            field[coordinates_list[0]][coordinates_list[1]] = "X"
+
+            print_field(field)
+
+            flag = check_game(field)
+
+            if flag == False:
+                break
+
+            coordinates_list = user(field)
+
+            field[coordinates_list[0]][coordinates_list[1]] = "O"
+
+            print_field(field)
+
+
+
+        elif user_input[1] != "user"  and user_input[2] == "user":
+
+            print(f"Making move level \"{user_input[2]}\"")
+
+            if user_input[2] == "hard":
+
+                player = "X"
+                opponent = "O"
+                x, y = hard_level(field)
+
+            elif user_input[2] == "medium":
+
+                x, y = medium_level(field, "X")
+
+            else:
+
+                x, y = level_easy(field)
+            field[x][y] = "X"
+
+            print_field(field)
+
+            flag = check_game(field)
+
+            if flag == False:
+                break
+
+            coordinates_list = user(field)
+
+            field[coordinates_list[0]][coordinates_list[1]] = "O"
+
+            print_field(field)
+
+
+
+        elif user_input[1] != "user"  and user_input[2] != "user":
+
+            print(f"Making move level \"{user_input[2]}\"")
+
+            if user_input[2] == "hard":
+
+                player = "X"
+                opponent = "O"
+                x, y = hard_level(field)
+
+            elif user_input[2] == "medium":
+
+                x, y = medium_level(field, "X")
+
+            else:
+
+                x, y = level_easy(field)
+
+            field[x][y] = "X"
+
+            print_field(field)
+
+            flag = check_game(field)
+
+            if flag == False:
+
+                break
+
+            print(f"Making move level \"{user_input[2]}\"")
+
+            if user_input[2] == "hard":
+
+                player = "O"
+                opponent = "X"
+                x, y = hard_level(field)
+
+            elif user_input[2] == "medium":
+
+                x, y = medium_level(field, "X")
+
+            else:
+
+                x, y = level_easy(field)
+            field[x][y] = "O"
+
+            print_field(field)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
